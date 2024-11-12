@@ -1,0 +1,68 @@
+#include <QApplication>
+#include <Qt3DCore/QEntity>
+#include <Qt3DExtras/Qt3DWindow>
+#include <Qt3DExtras/QSphereMesh>
+#include <Qt3DExtras/QCylinderMesh>
+#include <Qt3DExtras/QPhongMaterial>
+#include <Qt3DCore/QTransform>
+#include <Qt3DExtras/QOrbitCameraController>
+#include <Qt3DRender/QCamera>
+#include <Qt3DCore/QVector3D>
+
+int main(int argc, char *argv[]) {
+    QApplication app(argc, argv);
+
+    // Step 1: Set up the Qt 3D Window
+    Qt3DExtras::Qt3DWindow *view = new Qt3DExtras::Qt3DWindow();
+    QWidget *container = QWidget::createWindowContainer(view);
+    container->setMinimumSize(800, 600);
+
+    // Step 2: Root entity for all 3D objects
+    Qt3DCore::QEntity *rootEntity = new Qt3DCore::QEntity();
+
+    // Step 3: Create the Sphere (Bloch Sphere)
+    Qt3DExtras::QSphereMesh *sphereMesh = new Qt3DExtras::QSphereMesh();
+    sphereMesh->setRadius(1.0f);  // Radius of 1 for the Bloch Sphere
+
+    Qt3DExtras::QPhongMaterial *sphereMaterial = new Qt3DExtras::QPhongMaterial();
+    sphereMaterial->setDiffuse(QColor(0, 0, 255, 100)); // Transparent blue for Bloch Sphere
+
+    Qt3DCore::QEntity *sphereEntity = new Qt3DCore::QEntity(rootEntity);
+    sphereEntity->addComponent(sphereMesh);
+    sphereEntity->addComponent(sphereMaterial);
+
+    // Step 4: Create a Vector (Cylinder) to Represent the Qubit State
+    // We'll use a thin cylinder for the vector inside the sphere
+    Qt3DExtras::QCylinderMesh *vectorMesh = new Qt3DExtras::QCylinderMesh();
+    vectorMesh->setRadius(0.02f);   // Thin cylinder to represent vector
+    vectorMesh->setLength(1.0f);    // Length of the cylinder
+
+    Qt3DExtras::QPhongMaterial *vectorMaterial = new Qt3DExtras::QPhongMaterial();
+    vectorMaterial->setDiffuse(QColor(255, 0, 0)); // Red color for the vector
+
+    Qt3DCore::QTransform *vectorTransform = new Qt3DCore::QTransform();
+    vectorTransform->setTranslation(QVector3D(0, 0.5, 0));  // Position at center along y-axis
+
+    Qt3DCore::QEntity *vectorEntity = new Qt3DCore::QEntity(rootEntity);
+    vectorEntity->addComponent(vectorMesh);
+    vectorEntity->addComponent(vectorMaterial);
+    vectorEntity->addComponent(vectorTransform);
+
+    // Step 5: Add Camera and Controls
+    Qt3DRender::QCamera *camera = view->camera();
+    camera->lens()->setPerspectiveProjection(45.0f, 16.0f/9.0f, 0.1f, 100.0f);
+    camera->setPosition(QVector3D(0, 0, 3.0f));  // Position camera further back
+    camera->setViewCenter(QVector3D(0, 0, 0));
+
+    // Step 6: Orbit Camera Controller for user interaction
+    Qt3DExtras::QOrbitCameraController *camController = new Qt3DExtras::QOrbitCameraController(rootEntity);
+    camController->setCamera(camera);
+
+    // Final Step: Set root entity
+    view->setRootEntity(rootEntity);
+
+    // Show the container
+    container->show();
+
+    return app.exec();
+}
